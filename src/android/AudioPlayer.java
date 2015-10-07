@@ -81,7 +81,6 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
     private float duration = -1;            // Duration of audio
 
     private MediaRecorder recorder = null;  // Audio recording object
-    private String tempFile = null;         // Temporary recording file name
 
     private MediaPlayer player = null;      // Audio player object
     private boolean prepareOnly = true;     // playback after file prepare flag
@@ -143,7 +142,7 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
             this.recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             this.recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4); // used to be THREE_GPP);
             this.recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC); // used to be AMR_NB);
-            this.recorder.setOutputFile(this.tempFile);
+            this.recorder.setOutputFile(this.audioFile);
             try {
                 this.recorder.prepare();
                 this.recorder.start();
@@ -164,28 +163,6 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
     }
 
     /**
-     * Save temporary recorded file to specified name
-     *
-     * @param file
-     */
-    public void moveFile(String file) {
-        /* this is a hack to save the file as the specified name */
-        File f = new File(this.tempFile);
-
-        if (!file.startsWith("/")) {
-            if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                file = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + file;
-            } else {
-                file = "/data/data/" + handler.cordova.getActivity().getPackageName() + "/cache/" + file;
-            }
-        }
-
-        String logMsg = "renaming " + this.tempFile + " to " + file;
-        Log.d(LOG_TAG, logMsg);
-        if (!f.renameTo(new File(file))) Log.e(LOG_TAG, "FAILED " + logMsg);
-    }
-
-    /**
      * Stop recording and save to the file specified when recording started.
      */
     public void stopRecording() {
@@ -196,7 +173,6 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
                     this.setState(STATE.MEDIA_STOPPED);
                 }
                 this.recorder.reset();
-                this.moveFile(this.audioFile);
             }
             catch (Exception e) {
                 e.printStackTrace();
@@ -501,13 +477,13 @@ public class AudioPlayer implements OnCompletionListener, OnPreparedListener, On
                                 sendErrorStatus(MEDIA_ERR_ABORTED);
                             }
                             return false;//we´re not ready yet
-                        } 
+                        }
                         else {
                            //reset the audio file
                             player.seekTo(0);
                             player.pause();
-                            return true; 
-                        } 
+                            return true;
+                        }
                     } else {
                         //reset the player
                         this.player.reset();
